@@ -1,17 +1,20 @@
 {
   "author": "Daniel Stockman <daniels@zillow.com>",
   "name": "beaut",
-  "description": "js-beautifier forked for node.",
-  "version": "0.0.1",
+  "description": "js-beautifier forked for node, with savvier cli.",
+  "keywords": ["beautify", "idiomatic", "code quality"],
+  "version": "0.1.0",
   "repository": {
     "url": ""
   },
   "main": "./lib/beautify.js",
+  "bin": "./bin/beaut.js",
   "engines": {
     "node": ">=0.4.12"
   },
   "dependencies": {
-    "nopt": ">=1.0.10"
+    "nopt": "~1.0.10",
+    "minimatch": "~0.0.5"
   },
   "devDependencies": {}
 }
