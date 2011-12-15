@@ -29,7 +29,7 @@ var nopt = require('nopt'),
 
 if (config.usage || !config.cooked) {
     // user passed -h or no args
-    console.log([
+    process.stdout.write([
         "Usage: beaut [options] [file || URL || STDIN]",
         "",
         "Reads from standard input if no file or URL is specified.",
@@ -46,10 +46,11 @@ if (config.usage || !config.cooked) {
         "Examples:",
         "  beaut -i 2 example.js",
         "  beaut -i 1 http://www.example.org/example.js",
-        "  beaut < example.js"
+        "  beaut < example.js",
+        "\n"
     ].join( "\n" ));
 
     process.exit();
 }
 
-beautify = require('../lib/beautify').js_beautify;
+beautify = require('../lib/beautify');
