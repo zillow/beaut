@@ -2,8 +2,8 @@
   "author": "Daniel Stockman <daniels@zillow.com>",
   "name": "beaut",
   "description": "js-beautifier forked for node, with savvier cli.",
-  "keywords": ["beautify", "idiomatic", "code quality"],
-  "version": "0.2.0",
+  "keywords": ["beautify", "idiomatic", "javascript", "code quality"],
+  "version": "0.2.1",
   "repository": {
     "url": ""
   },
