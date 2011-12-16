@@ -3,7 +3,7 @@
   "name": "beaut",
   "description": "js-beautifier forked for node, with savvier cli.",
   "keywords": ["beautify", "idiomatic", "code quality"],
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": {
     "url": ""
   },
@@ -13,7 +13,7 @@
     "node": ">=0.4.12"
   },
   "dependencies": {
-    "nopt": "~1.0.10",
+    "commander": ">=0.5.0",
     "minimatch": "~0.0.5"
   },
   "devDependencies": {}

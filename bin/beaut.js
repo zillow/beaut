@@ -4,51 +4,42 @@
     // builtin dependencies
 var fs = require('fs'),
     path = require('path'),
+    tty = require('tty'),
 
     // npm-provided dependencies
-    nopt = require('nopt'),
+    program = require('commander'),
     minimatch = require('minimatch'),
 
     // package-provided dependency
-    beautify = require('../lib/beautify'),
+    beautify = require('../lib/beautify');
 
-    // parsing cli arguments with nopt
-    options = {
-        // beautify-specific
-        indent_size: Number,
-        indent_char: String,
-        brace_style: ['collapse', 'expand', 'end-expand'],
-        keep_array_indentation: Boolean,
-        preserve_newlines: Boolean,
-        preserve_max_newlines: Number,
-        jslint_happy: Boolean,
-        // custom
-        write_in_place: Boolean,
-        usage: Boolean
-    },
-    shorthand = {
-        // beautify-specific
-        i: ['--indent_size'],
-        b: ['--brace_style', 'expand'],
-        a: ['--keep_array_indentation'],
-        n: ['--preserve_newlines'],
-        p: ['--jslint_happy'],
 
-        // custom
-        w: ['--write_in_place'],
-        o: ['--jslint_happy', '--write_in_place', '--keep_array_indentation', '--brace_style', 'end-expand'],
-        h: ['--usage'],
-        help: ['--usage'],
-        '?': ['--usage']
-    },
-    config = nopt(options, shorthand);
+program.version('0.2.0')
+    .usage('[options] <file ...>|<stdin>')
+        .option('-i, --indent-size <n>', 'Number of chars to indent [4]', parseInt, 4)
+        .option('-c, --indent-char <s>', 'Character used to indent [space]', ' ')
+        .option('-b, --brace-style [style]', 'Style for braces (collapse|expand|end-expand) [collapse]', 'collapse')
+        .option('-a, --keep-array-indentation', 'Keep array indentation')
+        .option('-N, --no-preserve-newlines', 'Do not preserve existing line breaks')
+        .option('-m, --max-preserve-newlines [n]', 'Max newlines to preserve in one chunk', parseInt, 0)
+        .option('-p, --jslint-happy', 'Enforce stricter JSLint mode')
+        .option('-w, --write-in-place', 'Replace file contents in-place, instead of emitting to stdout');
 
-// console.log(config);
+program.on('--help', function () {
+    console.log([
+        "Examples:",
+        "  beaut -w ./foo/bar/*.js",
+        "  beaut -i 2 example.js",
+        "  beaut < example.js",
+        ""
+    ].join( "\n" ));
+});
 
-if (config.usage) {
-    printUsage();
-}
-else if (!require('tty').isatty(process.stdin)) {
+program.parse(process.argv);
+
+
+// Handle stdin, otherwise consume the rest of the CLI arguments (files)
+if (!tty.isatty(process.stdin)) {
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
 
@@ -57,26 +48,22 @@ else if (!require('tty').isatty(process.stdin)) {
         streamed += chunk;
     });
     process.stdin.on('end', function () {
-        finish(beautify(streamed));
+        finish(beautify(streamed, program));
     });
 }
-else if (config.argv.original.length === 0) {
-    console.warn("You must specify at least one file to beautify.\n");
-    printUsage(1);
-}
 else {
-    main(config.argv.remain, config);
+    handleFiles(program.args);
 }
 
 
 /**
  * Iterate over file list with beautifier, handling multiple file parameters.
  *
- * @method main
+ * @method handleFiles
  * @param {Array} files
  * @private
  */
-function main(files) {
+function handleFiles(files) {
     var output = [],
         jsPattern = "**.js",
         jsFiles = minimatch.match(files, jsPattern),
@@ -90,9 +77,9 @@ function main(files) {
                 fs.readFile(absolutePath, 'utf8', function (err, data) {
                     if (err) { throw err; }
 
-                    var beautified = beautify(data, config);
+                    var beautified = beautify(data, program);
 
-                    if (config.write_in_place) {
+                    if (program.writeInPlace) {
                         // replace file contents in-place
                         fs.writeFile(absolutePath, beautified, 'utf8', function (err) {
                             if (err) { throw err; }
@@ -118,20 +105,26 @@ function main(files) {
             }); // fs.realpath
         }); // forEach
     } // filesRemaining
+    else {
+        finish("You must specify at least one file to beautify.", 1);
+    }
 }
 
 /**
- * Print results to stdout and exit process, working around bugs.
+ * Print output to stdout and exit process, working around bugs.
  *
  * @method finish
- * @param {String} results
+ * @param {String} output
+ * @param {Mixed} [error] If truthy, process exits with error code (1)
  * @private
  */
-function finish(results) {
-    process.stdout.write(results + '\n');
+function finish(output, error) {
+    if (output.length) {
+        process.stdout.write(output + '\n');
+    }
 
     function exit() {
-        process.exit(results.length > 0 ? 1 : 0);
+        process.exit(error || output.length < 1 ? 1 : 0);
     }
 
     // avoid stdout cutoff in node 0.4.x, also supports 0.5.x
@@ -145,39 +138,5 @@ function finish(results) {
     } catch (e) {
         exit();
     }
-}
-
-/**
- * Print usage to stdout, then exit process with optional exitCode.
- *
- * @method printUsage
- * @param {Number} [exitCode] defaults to 0 ("success")
- * @private
- */
-function printUsage(exitCode) {
-    process.stdout.write([
-        "Usage: beaut [options] [file [...] || STDIN]",
-        "",
-        "Reads from standard input if no file[s] specified.",
-        "",
-        "Options:",
-        "-i NUM\tIndent size (default 4)",
-        "-b\tPut braces on own line (Allman / ANSI style)",
-        "-a\tIndent arrays",
-        "-n\tPreserve newlines",
-        "-p\tJSLint-pedantic mode, currently only adds space between \"function ()\"",
-        "",
-        "-w\tBeautify files in place, instead of outputting to stdout",
-        "-o\tOpinionated defaults",
-        "-h\tPrint this help",
-        "",
-        "Examples:",
-        "  beaut -w ./foo/bar/*.js",
-        "  beaut -i 2 example.js",
-        "  beaut < example.js",
-        ""
-    ].join( "\n" ));
-
-    process.exit(exitCode || 0);
 }
 
