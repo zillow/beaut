@@ -4,16 +4,19 @@
   "description": "js-beautifier forked for node, with savvier cli.",
   "keywords": ["beautify", "idiomatic", "javascript", "code quality"],
   "version": "0.2.1",
+  "homepage": "https://github.com/zillow/beaut",
   "repository": {
-    "url": ""
+    "type": "git",
+    "url": "git://github.com/zillow/beaut.git"
   },
   "main": "./lib/beautify.js",
   "bin": "./bin/beaut.js",
   "engines": {
-    "node": ">=0.4.12"
+    "node": ">=0.4.12",
+    "npm": "~1.0.106"
   },
   "dependencies": {
-    "commander": ">=0.5.0",
+    "commander": "~0.5.0",
     "minimatch": "~0.0.5"
   },
   "devDependencies": {}
